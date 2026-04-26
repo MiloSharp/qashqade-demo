@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+
+  # -- PostgreSQL -----------------------------------------------
+  postgres:
+    image: postgres:17-alpine
+    container_name: qashqade-postgres
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: qashqade
+      POSTGRES_PASSWORD: qashqade
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U qashqade"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # -- Spring Boot Backend ---------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: qashqade-backend
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/postgres
+      DB_USERNAME: qashqade
+      DB_PASSWORD: qashqade
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # -- Angular Frontend (nginx) ----------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: qashqade-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

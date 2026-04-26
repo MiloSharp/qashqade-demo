@@ -7,8 +7,8 @@ import { PageResponse } from "../ext-conn/ext-conn.service";
 @Injectable({ providedIn: "root" })
 export class PlannerService {
 
-  private readonly apiUrl  = "http://localhost:8080/api/planner";
-  private readonly fundUrl = "http://localhost:8080/api/fund";
+  private readonly apiUrl  = "/api/planner";
+  private readonly fundUrl = "/api/fund";
 
   constructor(private http: HttpClient) {}
 

@@ -16,7 +16,7 @@ export interface PageResponse<T> {
 @Injectable({ providedIn: "root" })
 export class ExtConnService {
 
-  private readonly apiUrl = "http://localhost:8080/api/ext-conn";
+  private readonly apiUrl = "/api/ext-conn";
 
   constructor(private http: HttpClient) {}
 

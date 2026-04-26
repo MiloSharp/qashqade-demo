@@ -99,26 +99,26 @@ export class PlannerComponent implements OnInit {
 
   fetchEmployees = async (search: string): Promise<TypeaheadOption[]> => {
     const params = new HttpParams().set("search", search).set("size", "10");
-    const page = await firstValueFrom(this.http.get<any>("http://localhost:8080/api/employee", { params }));
+    const page = await firstValueFrom(this.http.get<any>("/api/employee", { params }));
     return (page.content as Employee[]).map(e => ({ id: e.id, label: e.fullName }));
   }
 
   createEmployee = async (fullName: string): Promise<TypeaheadOption> => {
     const emp = await firstValueFrom(
-      this.http.post<Employee>("http://localhost:8080/api/employee", { fullName })
+      this.http.post<Employee>("/api/employee", { fullName })
     );
     return { id: emp.id, label: emp.fullName };
   }
 
   fetchFunds = async (search: string): Promise<TypeaheadOption[]> => {
     const params = new HttpParams().set("search", search).set("size", "10");
-    const page = await firstValueFrom(this.http.get<any>("http://localhost:8080/api/fund", { params }));
+    const page = await firstValueFrom(this.http.get<any>("/api/fund", { params }));
     return (page.content as Fund[]).map(f => ({ id: f.id, label: f.fundName }));
   }
 
   createFund = async (fundName: string): Promise<TypeaheadOption> => {
     const fund = await firstValueFrom(
-      this.http.post<Fund>("http://localhost:8080/api/fund", { fundName })
+      this.http.post<Fund>("/api/fund", { fundName })
     );
     return { id: fund.id, label: fund.fundName };
   }
@@ -127,7 +127,7 @@ export class PlannerComponent implements OnInit {
   fetchAliasesForFund(fundId: number) {
     return async (search: string): Promise<TypeaheadOption[]> => {
       const aliases = await firstValueFrom(
-        this.http.get<FundAlias[]>("http://localhost:8080/api/fund/" + fundId + "/aliases")
+        this.http.get<FundAlias[]>("/api/fund/" + fundId + "/aliases")
       );
       const filtered = search
         ? aliases.filter(a => a.aliasName.toLowerCase().includes(search.toLowerCase()))
@@ -143,7 +143,7 @@ export class PlannerComponent implements OnInit {
     return async (aliasName: string): Promise<TypeaheadOption> => {
       const alias = await firstValueFrom(
         this.http.post<FundAlias>(
-          "http://localhost:8080/api/fund/" + fundId + "/aliases",
+          "/api/fund/" + fundId + "/aliases",
           { aliasName }
         )
       );
@@ -153,19 +153,19 @@ export class PlannerComponent implements OnInit {
 
   fetchSources = async (search: string): Promise<TypeaheadOption[]> => {
     const params = new HttpParams().set("search", search).set("size", "10");
-    const page = await firstValueFrom(this.http.get<any>("http://localhost:8080/api/source", { params }));
+    const page = await firstValueFrom(this.http.get<any>("/api/source", { params }));
     return (page.content as Source[]).map(s => ({ id: s.id, label: s.sourceName }));
   }
 
   fetchRuns = async (search: string): Promise<TypeaheadOption[]> => {
     const params = new HttpParams().set("search", search).set("size", "10");
-    const page = await firstValueFrom(this.http.get<any>("http://localhost:8080/api/run", { params }));
+    const page = await firstValueFrom(this.http.get<any>("/api/run", { params }));
     return (page.content as Run[]).map(r => ({ id: r.id, label: r.runName }));
   }
 
   fetchReports = async (search: string): Promise<TypeaheadOption[]> => {
     const params = new HttpParams().set("search", search).set("size", "10");
-    const page = await firstValueFrom(this.http.get<any>("http://localhost:8080/api/report", { params }));
+    const page = await firstValueFrom(this.http.get<any>("/api/report", { params }));
     return (page.content as Report[]).map(r => ({ id: r.id, label: r.reportType + " - " + r.reportName }));
   }
 
