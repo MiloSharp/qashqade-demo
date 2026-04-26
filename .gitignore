@@ -1,0 +1,32 @@
+# -- Java / Maven ----------------------------------------------
+target/
+*.class
+*.jar
+*.war
+
+# -- Spring Boot secrets ---------------------------------------
+backend/src/main/resources/application-dev.properties
+backend/src/main/resources/application-prod.properties
+
+# -- Angular ---------------------------------------------------
+frontend/node_modules/
+frontend/.angular/
+frontend/dist/
+
+# -- IDE -------------------------------------------------------
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.DS_Store
+Thumbs.db
+
+# -- Logs -----------------------------------------------------
+*.log
+
+# -- Stray output files ----------------------------------------
+files*/
+frontend/app/
+frontend/files/
+application.properties

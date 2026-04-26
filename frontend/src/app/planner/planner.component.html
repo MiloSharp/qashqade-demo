@@ -1,0 +1,294 @@
+<div class="qd-container">
+
+  <header class="qd-header">
+    <h1>Planners</h1>
+    <span class="qd-count">{{ totalElements | number }} planners</span>
+    <button class="qd-btn qd-btn--primary qd-btn--add" (click)="addNew()">+ Add new</button>
+  </header>
+
+  <div class="qd-toolbar">
+    <input class="qd-search" type="text" placeholder="Search by name or owner..."
+           (input)="onSearch($any($event.target).value)" />
+    <div class="qd-page-size">
+      <label for="planner-page-size">Rows per page</label>
+      <select id="planner-page-size" [ngModel]="pageSize" (ngModelChange)="onPageSizeChange($event)">
+        @for (opt of pageSizeOptions; track opt) {
+          <option [value]="opt">{{ opt }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  @if (errorMsg) { <div class="qd-error">{{ errorMsg }}</div> }
+
+  @if (totalElements > 0) {
+    <div class="qd-results">Showing {{ rangeStart | number }}-{{ rangeEnd | number }} of {{ totalElements | number }}</div>
+  }
+
+  @if (items.length === 0 && !errorMsg) {
+    <div class="qd-empty">No planners found.</div>
+  }
+
+  @if (items.length > 0) {
+    <div class="pl-list-header">
+      <button class="pl-col-name pl-sort-btn" (click)="sortBy$('name')">
+        Planner Name <span class="pl-sort-icon"><app-icon [name]="!isSortedBy('name') ? 'sort-both' : isSortedAsc() ? 'sort-asc' : 'sort-desc'" /></span>
+      </button>
+      <button class="pl-col-owner pl-sort-btn" (click)="sortBy$('owner')">
+        Owner <span class="pl-sort-icon"><app-icon [name]="!isSortedBy('owner') ? 'sort-both' : isSortedAsc() ? 'sort-asc' : 'sort-desc'" /></span>
+      </button>
+      <button class="pl-col-status pl-sort-btn" (click)="sortBy$('status')">
+        Status <span class="pl-sort-icon"><app-icon [name]="!isSortedBy('status') ? 'sort-both' : isSortedAsc() ? 'sort-asc' : 'sort-desc'" /></span>
+      </button>
+      <button class="pl-col-statusat pl-sort-btn" (click)="sortBy$('statusAt')">
+        Status Date <span class="pl-sort-icon"><app-icon [name]="!isSortedBy('statusAt') ? 'sort-both' : isSortedAsc() ? 'sort-asc' : 'sort-desc'" /></span>
+      </button>
+      <span class="pl-col-actions">Actions</span>
+    </div>
+  }
+
+  <ul class="qd-list">
+    @for (item of items; track item.id) {
+      <li class="qd-item" [class.qd-item--expanded]="isExpanded(item)">
+
+        @if (deleteConfirmId === item.id) {
+          <div class="qd-delete-confirm">
+            <span>Delete <strong>{{ item.name }}</strong>? This cannot be undone.</span>
+            <div class="qd-delete-actions">
+              <button class="qd-btn qd-btn--danger" (click)="deleteItem(item)">Delete</button>
+              <button class="qd-btn qd-btn--secondary" (click)="cancelDelete()">Cancel</button>
+            </div>
+          </div>
+        }
+
+        @if (deleteConfirmId !== item.id) {
+          <div class="qd-row-wrap">
+            <button class="qd-row pl-row" (click)="toggle(item)" [attr.aria-expanded]="isExpanded(item)">
+              <span class="pl-col-name qd-name">{{ item.name }}</span>
+              <span class="pl-col-owner pl-owner">{{ item.ownerEmployee?.fullName || item.owner || "" }}</span>
+              <span class="pl-col-status" [class]="statusClass(item.status)">{{ item.status || "" }}</span>
+              <span class="pl-col-statusat pl-statusat" [class]="statusClass(item.status)">{{ item.statusAt ? (item.statusAt | date:"dd/MM/yyyy HH:mm") : "" }}</span>
+            </button>
+            <div class="qd-row-actions">
+              <button class="qd-icon-btn qd-icon-btn--run" title="Run" (click)="run(item, $event)"><app-icon name="run" /></button>
+              @if (item.status) {
+                <button class="qd-icon-btn" title="Download log" (click)="download(item, $event)"><app-icon name="download" /></button>
+              }
+              <button class="qd-icon-btn" title="Clone" (click)="clone(item, $event)"><app-icon name="clone" /></button>
+              <button class="qd-icon-btn qd-icon-btn--danger" title="Delete" (click)="confirmDelete(item, $event)"><app-icon name="delete" /></button>
+            </div>
+            <button class="qd-chevron-btn" (click)="toggle(item)">
+              <svg class="qd-chevron" [class.qd-chevron--open]="isExpanded(item)" viewBox="0 0 16 16" fill="none" style="width:16px;height:16px;display:block"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+        }
+
+        @if (isExpanded(item)) {
+          <div class="qd-detail" [class.qd-detail--locked]="isItemLocked(item)">
+            <div class="qd-detail-header" [class.qd-detail-header--locked]="isItemLocked(item)">
+              <span>{{ editCopy.name || "New planner" }}</span>
+              @if (isItemLocked(item)) {
+                <span class="qd-lock-badge">
+                  <svg viewBox="0 0 16 16" fill="none" style="width:12px;height:12px;display:inline-block;vertical-align:middle;flex-shrink:0"><rect x="3" y="7" width="10" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                  Finished -- read only
+                </span>
+              }
+            </div>
+            <form (ngSubmit)="save(item)" #f="ngForm">
+
+              <div class="qd-field span-2">
+                <label for="pl-name-{{item.id}}">Name</label>
+                <input id="pl-name-{{item.id}}" type="text" [(ngModel)]="editCopy.name" name="name" required [disabled]="isEditCopyLocked()" />
+              </div>
+              <div class="qd-field span-2">
+                <label for="pl-desc-{{item.id}}">Description</label>
+                <input id="pl-desc-{{item.id}}" type="text" [(ngModel)]="editCopy.description" name="description" [disabled]="isEditCopyLocked()" />
+              </div>
+              <div class="qd-field">
+                <label for="pl-type-{{item.id}}">Planner type</label>
+                <select id="pl-type-{{item.id}}" [(ngModel)]="editCopy.plannerTypeId" name="plannerTypeId" [disabled]="isEditCopyLocked()">
+                  <option [value]="undefined">-- Select --</option>
+                  @for (pt of plannerTypes; track pt.id) { <option [value]="pt.id">{{ pt.name }}</option> }
+                </select>
+              </div>
+              <div class="qd-field">
+                <label>External system config</label>
+                <app-typeahead [fetchFn]="fetchExtConns" [selectedId]="editCopy.extConnId"
+                  [selectedLabel]="extConnLabel(item)" [disabled]="isEditCopyLocked()"
+                  placeholder="Search connections..." (selected)="onExtConnSelected($event)" />
+              </div>
+              <!-- -- Funds ---------------------------------------- -->
+              <div class="qd-assoc span-2">
+                <div class="qd-assoc-header">
+                  <span class="qd-assoc-title">Funds:</span>
+                  @if (!isEditCopyLocked()) {
+                    <app-typeahead [fetchFn]="fetchFunds" [createFn]="createFund" [allowCreate]="true"
+                      [resetAfterSelect]="true" placeholder="Add fund..."
+                      (selected)="addFund($event)" class="qd-assoc-typeahead" />
+                  }
+                </div>
+                @if (plannerFunds.length > 0) {
+                  <div class="qd-fund-col-header">
+                    <span class="qd-fund-col-label">Fund Name</span>
+                    <span class="qd-fund-col-label">Alias</span>
+                  </div>
+                  <div class="qd-fund-list">
+                    @for (pf of plannerFunds; track pf.id) {
+                      <div class="qd-fund-row">
+                        <div class="qd-fund-name">
+                          <app-typeahead
+                            [fetchFn]="fetchFunds"
+                            [selectedId]="pf.fund.id"
+                            [selectedLabel]="pf.fund.fundName"
+                            [disabled]="true"
+                            placeholder="Fund name" />
+                        </div>
+                        <div class="qd-fund-alias">
+                          <app-typeahead
+                            [fetchFn]="fetchAliasesForFund(pf.fund.id)"
+                            [createFn]="createAliasForFund(pf.fund.id)"
+                            [allowCreate]="!isEditCopyLocked()"
+                            [selectedId]="pf.alias?.id ?? 0"
+                            [selectedLabel]="pf.alias?.aliasName ?? 'No Alias'"
+                            [disabled]="isEditCopyLocked()"
+                            placeholder="No Alias"
+                            (selected)="updateFundAlias(pf.id, $event)" />
+                        </div>
+                        @if (!isEditCopyLocked()) {
+                          <button type="button" class="qd-assoc-remove qd-fund-remove" (click)="removeFund(pf.id)" title="Remove fund">
+                            <app-icon name="delete" [size]="13" />
+                          </button>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
+              <div class="qd-field span-2">
+                <label class="qd-label">Triggers</label>
+                <div class="qd-checkbox-group">
+                  <label class="qd-checkbox"><input type="checkbox" [(ngModel)]="editCopy.triggerSources" name="triggerSources" [disabled]="isEditCopyLocked()" /><span>Sources</span></label>
+                  <label class="qd-checkbox"><input type="checkbox" [(ngModel)]="editCopy.triggerRuns" name="triggerRuns" [disabled]="isEditCopyLocked()" /><span>Runs</span></label>
+                  <label class="qd-checkbox"><input type="checkbox" [(ngModel)]="editCopy.triggerReports" name="triggerReports" [disabled]="isEditCopyLocked()" /><span>Reports</span></label>
+                </div>
+              </div>
+
+              <!-- -- Sources ----------------------------------- -->
+              <div class="qd-assoc span-2">
+                <div class="qd-assoc-header">
+                  <span class="qd-assoc-title">Sources:</span>
+                  @if (!isEditCopyLocked()) {
+                    <app-typeahead [fetchFn]="fetchSources" [selectedId]="undefined" [selectedLabel]="''"
+                      placeholder="Add source..." (selected)="addSource($event)" [resetAfterSelect]="true" class="qd-assoc-typeahead" />
+                  }
+                </div>
+                @if (editCopy.sources && editCopy.sources.length > 0) {
+                  <ul class="qd-assoc-list">
+                    @for (s of editCopy.sources; track s.id) {
+                      <li class="qd-assoc-item">
+                        <span>{{ s.sourceName }}</span>
+                        @if (!isEditCopyLocked()) {
+                          <button type="button" class="qd-assoc-remove" (click)="removeSource(s.id)" title="Remove">
+                            <app-icon name="delete" [size]="13" />
+                          </button>
+                        }
+                      </li>
+                    }
+                  </ul>
+                }
+              </div>
+
+              <!-- -- Runs ------------------------------------- -->
+              <div class="qd-assoc span-2">
+                <div class="qd-assoc-header">
+                  <span class="qd-assoc-title">Runs:</span>
+                  @if (!isEditCopyLocked()) {
+                    <app-typeahead [fetchFn]="fetchRuns" [selectedId]="undefined" [selectedLabel]="''"
+                      placeholder="Add run..." (selected)="addRun($event)" [resetAfterSelect]="true" class="qd-assoc-typeahead" />
+                  }
+                </div>
+                @if (editCopy.runs && editCopy.runs.length > 0) {
+                  <ul class="qd-assoc-list">
+                    @for (r of editCopy.runs; track r.id) {
+                      <li class="qd-assoc-item">
+                        <span>{{ r.runName }}</span>
+                        @if (!isEditCopyLocked()) {
+                          <button type="button" class="qd-assoc-remove" (click)="removeRun(r.id)" title="Remove">
+                            <app-icon name="delete" [size]="13" />
+                          </button>
+                        }
+                      </li>
+                    }
+                  </ul>
+                }
+              </div>
+
+              <!-- -- Reports --------------------------------- -->
+              <div class="qd-assoc span-2">
+                <div class="qd-assoc-header">
+                  <span class="qd-assoc-title">Reports:</span>
+                  @if (!isEditCopyLocked()) {
+                    <app-typeahead [fetchFn]="fetchReports" [selectedId]="undefined" [selectedLabel]="''"
+                      placeholder="Add report..." (selected)="addReport($event)" [resetAfterSelect]="true" class="qd-assoc-typeahead" />
+                  }
+                </div>
+                @if (editCopy.reports && editCopy.reports.length > 0) {
+                  <ul class="qd-assoc-list">
+                    @for (r of editCopy.reports; track r.id) {
+                      <li class="qd-assoc-item">
+                        <span>{{ r.reportType }} - {{ r.reportName }}</span>
+                        @if (!isEditCopyLocked()) {
+                          <button type="button" class="qd-assoc-remove" (click)="removeReport(r.id)" title="Remove">
+                            <app-icon name="delete" [size]="13" />
+                          </button>
+                        }
+                      </li>
+                    }
+                  </ul>
+                }
+              </div>
+
+              <div class="qd-field span-2">
+                <label>Owner</label>
+                <app-typeahead [fetchFn]="fetchEmployees" [createFn]="createEmployee" [allowCreate]="true" [selectedId]="editCopy.ownerEmployeeId" [selectedLabel]="ownerLabel(item)" [disabled]="isEditCopyLocked()" placeholder="Search or create employee..." (selected)="onOwnerSelected($event)" />
+              </div>
+              <div class="qd-field">
+                <label for="pl-status-{{item.id}}">Status</label>
+                <select id="pl-status-{{item.id}}" [(ngModel)]="editCopy.status" name="status">
+                  @for (s of statusOptions; track s) { <option [value]="s">{{ s || "-- None --" }}</option> }
+                </select>
+              </div>
+
+              @if (item.createdAt) {
+                <div class="qd-meta span-2">
+                  Created {{ item.createdAt | date:"medium" }} &nbsp;.&nbsp; Updated {{ item.updatedAt | date:"medium" }}
+                </div>
+              }
+              <div class="qd-actions span-2">
+                <button type="submit" class="qd-btn qd-btn--primary" [disabled]="saving">{{ saving ? "Saving..." : "Save" }}</button>
+                <button type="button" class="qd-btn qd-btn--secondary" (click)="cancel()">Cancel</button>
+              </div>
+
+            </form>
+          </div>
+        }
+
+      </li>
+    }
+  </ul>
+
+  @if (totalPages > 1) {
+    <div class="qd-pagination">
+      <button class="qd-page-btn qd-page-btn--nav" (click)="goToPage(0)" [disabled]="currentPage === 0" title="First page"><app-icon name="nav-first" /></button>
+      <button class="qd-page-btn qd-page-btn--nav" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 0" title="Previous page"><app-icon name="nav-prev" /></button>
+      @for (p of pages; track p) {
+        <button class="qd-page-btn" [class.qd-page-btn--active]="p === currentPage" (click)="goToPage(p)">{{ p + 1 }}</button>
+      }
+      <button class="qd-page-btn qd-page-btn--nav" (click)="goToPage(currentPage + 1)" [disabled]="currentPage >= totalPages - 1" title="Next page"><app-icon name="nav-next" /></button>
+      <button class="qd-page-btn qd-page-btn--nav" (click)="goToPage(totalPages - 1)" [disabled]="currentPage >= totalPages - 1" title="Last page"><app-icon name="nav-last" /></button>
+    </div>
+    <div class="qd-page-indicator">Page {{ currentPage + 1 }} of {{ totalPages }}</div>
+  }
+
+</div>

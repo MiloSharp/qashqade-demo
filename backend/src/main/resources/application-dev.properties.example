@@ -1,0 +1,5 @@
+# Copy this to application-dev.properties and fill in your local values
+spring.datasource.url=jdbc:postgresql://localhost:5432/postgres
+spring.datasource.username=your_db_username
+spring.datasource.password=your_db_password
+spring.jpa.show-sql=true

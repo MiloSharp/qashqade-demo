@@ -1,0 +1,191 @@
+<div class="qd-container">
+
+  <header class="qd-header">
+    <h1>External Connections</h1>
+    <span class="qd-count">{{ totalElements | number }} connections</span>
+    <button class="qd-btn qd-btn--primary qd-btn--add" (click)="addNew()">+ Add new</button>
+  </header>
+
+  <div class="qd-toolbar">
+    <input class="qd-search" type="text" placeholder="Search by name..."
+           (input)="onSearch($any($event.target).value)" />
+    <div class="qd-page-size">
+      <label for="page-size">Rows per page</label>
+      <select id="page-size" [ngModel]="pageSize" (ngModelChange)="onPageSizeChange($event)">
+        @for (opt of pageSizeOptions; track opt) {
+          <option [value]="opt">{{ opt }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  @if (errorMsg) {
+    <div class="qd-error">{{ errorMsg }}</div>
+  }
+
+  @if (totalElements > 0) {
+    <div class="qd-results">
+      Showing {{ rangeStart | number }}-{{ rangeEnd | number }} of {{ totalElements | number }}
+    </div>
+  }
+
+  @if (items.length === 0 && !errorMsg) {
+    <div class="qd-empty">No connections found.</div>
+  }
+
+  <ul class="qd-list">
+    @for (item of items; track item.id) {
+      <li class="qd-item" [class.qd-item--expanded]="isExpanded(item)">
+
+        @if (deleteConfirmId === item.id) {
+          <div class="qd-delete-confirm">
+            <span>Delete <strong>{{ item.name }}</strong>? This cannot be undone.</span>
+            <div class="qd-delete-actions">
+              <button class="qd-btn qd-btn--danger" (click)="deleteItem(item)">Delete</button>
+              <button class="qd-btn qd-btn--secondary" (click)="cancelDelete()">Cancel</button>
+            </div>
+          </div>
+        }
+
+        @if (deleteConfirmId !== item.id) {
+          <div class="qd-row-wrap">
+            <button class="qd-row" (click)="toggle(item)" [attr.aria-expanded]="isExpanded(item)">
+              <span class="qd-name">{{ item.name }}</span>
+              <svg class="qd-chevron" [class.qd-chevron--open]="isExpanded(item)" viewBox="0 0 16 16" fill="none">
+                <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <div class="qd-row-actions">
+              <button class="qd-icon-btn" title="Clone" (click)="clone(item, $event)">
+                <svg viewBox="0 0 16 16" fill="none">
+                  <rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+                  <path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </button>
+              <button class="qd-icon-btn qd-icon-btn--danger" title="Delete" (click)="confirmDelete(item, $event)">
+                <svg viewBox="0 0 16 16" fill="none">
+                  <path d="M2 4h12M5 4V2.5A.5.5 0 0 1 5.5 2h5a.5.5 0 0 1 .5.5V4M6 7v5M10 7v5M3 4l1 9.5A.5.5 0 0 0 4.5 14h7a.5.5 0 0 0 .5-.5L13 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        }
+
+        @if (isExpanded(item)) {
+          <div class="qd-detail">
+
+            <!-- Expanded pane header -->
+            <div class="qd-detail-header">
+              <span>{{ editCopy.name || "New connection" }}</span>
+            </div>
+
+            <form (ngSubmit)="save(item)" #f="ngForm">
+              <div class="qd-field">
+                <label for="name-{{item.id}}">Name</label>
+                <input id="name-{{item.id}}" type="text" [(ngModel)]="editCopy.name" name="name" required />
+              </div>
+              <div class="qd-field">
+                <label for="baseUrl-{{item.id}}">Base URL</label>
+                <input id="baseUrl-{{item.id}}" type="text" [(ngModel)]="editCopy.baseUrl" name="baseUrl" />
+              </div>
+              <div class="qd-field">
+                <label for="authMethod-{{item.id}}">Authentication method</label>
+                <select id="authMethod-{{item.id}}" [(ngModel)]="editCopy.authMethod" name="authMethod">
+                  <option value="">-- Select --</option>
+                  <option value="API Key">API Key</option>
+                  <option value="OAuth 2.0">OAuth 2.0</option>
+                  <option value="Basic Auth">Basic Auth</option>
+                  <option value="Bearer Token">Bearer Token</option>
+                  <option value="JWT">JWT</option>
+                  <option value="HMAC">HMAC</option>
+                  <option value="SAML">SAML</option>
+                  <option value="No Auth">No Auth</option>
+                </select>
+              </div>
+              <div class="qd-field">
+                <label class="qd-label">Auth location</label>
+                <div class="qd-radio-group">
+                  <label class="qd-radio">
+                    <input type="radio" name="authLocation" [(ngModel)]="editCopy.authLocation" value="Header" />
+                    <span>Header</span>
+                  </label>
+                  <label class="qd-radio">
+                    <input type="radio" name="authLocation" [(ngModel)]="editCopy.authLocation" value="QueryParameters" />
+                    <span>Query parameters</span>
+                  </label>
+                </div>
+              </div>
+              <div class="qd-field">
+                <label for="authKey-{{item.id}}">Auth key</label>
+                <input id="authKey-{{item.id}}" type="text" [(ngModel)]="editCopy.authKey" name="authKey" />
+              </div>
+              <div class="qd-field">
+                <label for="authValue-{{item.id}}">Auth value</label>
+                <input id="authValue-{{item.id}}" type="text" [(ngModel)]="editCopy.authValue" name="authValue" />
+              </div>
+              <div class="qd-field">
+                <label for="description-{{item.id}}">Description</label>
+                <input id="description-{{item.id}}" type="text" [(ngModel)]="editCopy.description" name="description" />
+              </div>
+              @if (item.createdAt) {
+                <div class="qd-meta">
+                  Created {{ item.createdAt | date:"medium" }}
+                  &nbsp;.&nbsp;
+                  Updated {{ item.updatedAt | date:"medium" }}
+                </div>
+              }
+              <div class="qd-actions">
+                <button type="submit" class="qd-btn qd-btn--primary" [disabled]="saving">
+                  {{ saving ? "Saving..." : "Save" }}
+                </button>
+                <button type="button" class="qd-btn qd-btn--secondary" (click)="cancel()">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        }
+
+      </li>
+    }
+  </ul>
+
+  @if (totalPages > 1) {
+    <div class="qd-pagination">
+
+      <button class="qd-page-btn qd-page-btn--nav" (click)="goToPage(0)" [disabled]="currentPage === 0" title="First page">
+        <svg viewBox="0 0 16 16" fill="none">
+          <path d="M3 3v10M13 4L7 8l6 4V4z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+
+      <button class="qd-page-btn qd-page-btn--nav" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 0" title="Previous page">
+        <svg viewBox="0 0 16 16" fill="none">
+          <path d="M10 4L6 8l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+
+      @for (p of pages; track p) {
+        <button class="qd-page-btn" [class.qd-page-btn--active]="p === currentPage" (click)="goToPage(p)">{{ p + 1 }}</button>
+      }
+
+      <button class="qd-page-btn qd-page-btn--nav" (click)="goToPage(currentPage + 1)" [disabled]="currentPage >= totalPages - 1" title="Next page">
+        <svg viewBox="0 0 16 16" fill="none">
+          <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+
+      <button class="qd-page-btn qd-page-btn--nav" (click)="goToPage(totalPages - 1)" [disabled]="currentPage >= totalPages - 1" title="Last page">
+        <svg viewBox="0 0 16 16" fill="none">
+          <path d="M13 3v10M3 4l6 4-6 4V4z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+
+    </div>
+
+    <div class="qd-page-indicator">
+      Page {{ currentPage + 1 }} of {{ totalPages }}
+    </div>
+  }
+
+</div>
