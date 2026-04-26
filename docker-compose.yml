@@ -21,23 +21,25 @@ services:
       timeout: 5s
       retries: 5
 
-  # -- Spring Boot Backend ---------------------------------------
+  # -- Spring Boot Backend --------------------------------------
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: qashqade-backend
     environment:
-      DB_URL: jdbc:postgresql://postgres:5432/postgres
-      DB_USERNAME: qashqade
-      DB_PASSWORD: qashqade
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/postgres
+      SPRING_DATASOURCE_USERNAME: qashqade
+      SPRING_DATASOURCE_PASSWORD: qashqade
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_JPA_SHOW_SQL: "false"
     ports:
       - "8080:8080"
     depends_on:
       postgres:
         condition: service_healthy
 
-  # -- Angular Frontend (nginx) ----------------------------------
+  # -- Angular Frontend (nginx) ---------------------------------
   frontend:
     build:
       context: ./frontend
