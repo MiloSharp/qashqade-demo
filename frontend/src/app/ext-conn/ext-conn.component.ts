@@ -18,6 +18,7 @@ export class ExtConnComponent implements OnInit {
   items: ExtConn[] = [];
   expandedId: number | null = null;
   editCopy: Partial<ExtConn> = {};
+  authValueCleared = false;
   saving = false;
   errorMsg = "";
   deleteConfirmId: number | null = null;
@@ -27,7 +28,7 @@ export class ExtConnComponent implements OnInit {
   pageSize = 25;
   totalElements = 0;
   totalPages = 0;
-  pageSizeOptions = [10, 25, 50, 100];
+  pageSizeOptions = [5, 10, 25, 50, 100];
 
   searchTerm = "";
   private searchSubject = new Subject<string>();
@@ -104,13 +105,14 @@ export class ExtConnComponent implements OnInit {
     const id = this.expandedId;
     this.saving = true;
     this.errorMsg = "";
+    this.expandedId = null;
     this.svc.update(id, this.editCopy as ExtConn).subscribe({
       next: updated => {
         const idx = this.items.findIndex(i => i.id === updated.id);
         if (idx > -1) this.items[idx] = updated;
         this.saving = false;
-        this.expandedId = null;
         this.editCopy = {};
+        this.authValueCleared = false;
         if (this.pendingExpandId !== null) {
           const next = this.items.find(i => i.id === this.pendingExpandId);
           if (next) this.openRow(next);
@@ -130,6 +132,13 @@ export class ExtConnComponent implements OnInit {
   private openRow(item: ExtConn): void {
     this.expandedId = item.id!;
     this.editCopy = { ...item };
+    this.authValueCleared = false;
+    this.cdr.detectChanges();
+  }
+
+  clearAuthValue(): void {
+    this.editCopy.authValue = '';
+    this.authValueCleared = true;
     this.cdr.detectChanges();
   }
 
@@ -142,6 +151,7 @@ export class ExtConnComponent implements OnInit {
     this.expandedId = null;
     this.editCopy = {};
     this.errorMsg = "";
+    this.authValueCleared = false;
     this.pendingExpandId = null;
   }
 
@@ -185,9 +195,7 @@ export class ExtConnComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  cancelDelete(): void {
-    this.deleteConfirmId = null;
-  }
+  cancelDelete(): void { this.deleteConfirmId = null; }
 
   deleteItem(item: ExtConn): void {
     this.svc.delete(item.id!).subscribe({
@@ -197,6 +205,7 @@ export class ExtConnComponent implements OnInit {
         if (this.expandedId === item.id) {
           this.expandedId = null;
           this.editCopy = {};
+          this.authValueCleared = false;
         }
         this.deleteConfirmId = null;
         this.cdr.detectChanges();

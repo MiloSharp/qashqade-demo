@@ -36,7 +36,7 @@ export class PlannerComponent implements OnInit {
   pageSize = 25;
   totalElements = 0;
   totalPages = 0;
-  pageSizeOptions = [10, 25, 50, 100];
+  pageSizeOptions = [5, 10, 25, 50, 100];
 
   sortBy = "name";
   sortDir = "asc";

@@ -38,30 +38,34 @@ public class ExtConn {
     @Column(name = "UpdatedAt")
     private OffsetDateTime updatedAt;
 
-    public Long getId()                          { return id; }
-    public void setId(Long id)                   { this.id = id; }
+    @PrePersist
+    protected void onCreate() {
+        OffsetDateTime now = OffsetDateTime.now();
+        if (this.createdAt == null) this.createdAt = now;
+        if (this.updatedAt == null) this.updatedAt = now;
+    }
 
-    public String getName()                      { return name; }
-    public void setName(String name)             { this.name = name; }
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = OffsetDateTime.now();
+    }
 
-    public String getBaseUrl()                   { return baseUrl; }
-    public void setBaseUrl(String baseUrl)       { this.baseUrl = baseUrl; }
-
-    public String getAuthLocation()              { return authLocation; }
-    public void setAuthLocation(String v)        { this.authLocation = v; }
-
-    public String getAuthKey()                   { return authKey; }
-    public void setAuthKey(String authKey)       { this.authKey = authKey; }
-
-    public String getAuthValue()                 { return authValue; }
-    public void setAuthValue(String authValue)   { this.authValue = authValue; }
-
-    public String getAuthMethod()                { return authMethod; }
-    public void setAuthMethod(String authMethod) { this.authMethod = authMethod; }
-
-    public String getDescription()               { return description; }
-    public void setDescription(String desc)      { this.description = desc; }
-
-    public OffsetDateTime getCreatedAt()         { return createdAt; }
-    public OffsetDateTime getUpdatedAt()         { return updatedAt; }
+    public Long getId()                              { return id; }
+    public void setId(Long id)                       { this.id = id; }
+    public String getName()                          { return name; }
+    public void setName(String name)                 { this.name = name; }
+    public String getBaseUrl()                       { return baseUrl; }
+    public void setBaseUrl(String v)                 { this.baseUrl = v; }
+    public String getAuthLocation()                  { return authLocation; }
+    public void setAuthLocation(String v)            { this.authLocation = v; }
+    public String getAuthKey()                       { return authKey; }
+    public void setAuthKey(String v)                 { this.authKey = v; }
+    public String getAuthValue()                     { return authValue; }
+    public void setAuthValue(String v)               { this.authValue = v; }
+    public String getAuthMethod()                    { return authMethod; }
+    public void setAuthMethod(String v)              { this.authMethod = v; }
+    public String getDescription()                   { return description; }
+    public void setDescription(String v)             { this.description = v; }
+    public OffsetDateTime getCreatedAt()             { return createdAt; }
+    public OffsetDateTime getUpdatedAt()             { return updatedAt; }
 }

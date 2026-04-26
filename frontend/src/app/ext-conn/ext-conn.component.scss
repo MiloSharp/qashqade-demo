@@ -323,3 +323,22 @@ $font:    system-ui, sans-serif;
   color: $muted;
   margin-top: 8px;
 }
+
+// -- Auth value masked field -----------------------------------
+.qd-auth-value-set {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.qd-auth-value-masked {
+  font-size: 18px;
+  letter-spacing: 3px;
+  color: #6B7585;
+  line-height: 1;
+}
+
+.qd-btn--sm {
+  padding: 4px 10px;
+  font-size: 12px;
+}

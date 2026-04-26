@@ -120,8 +120,15 @@
                 <input id="authKey-{{item.id}}" type="text" [(ngModel)]="editCopy.authKey" name="authKey" />
               </div>
               <div class="qd-field">
-                <label for="authValue-{{item.id}}">Auth value</label>
-                <input id="authValue-{{item.id}}" type="text" [(ngModel)]="editCopy.authValue" name="authValue" />
+                <label>Auth value</label>
+                @if (item.authValue && !authValueCleared) {
+                  <div class="qd-auth-value-set">
+                    <input type="password" value="placeholder" disabled class="qd-auth-value-masked" />
+                    <button type="button" class="qd-btn qd-btn--secondary qd-btn--sm" (click)="clearAuthValue()">Clear</button>
+                  </div>
+                } @else {
+                  <input type="text" [(ngModel)]="editCopy.authValue" name="authValue" placeholder="Enter auth value..." />
+                }
               </div>
               <div class="qd-field">
                 <label for="description-{{item.id}}">Description</label>
